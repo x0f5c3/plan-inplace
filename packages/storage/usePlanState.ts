@@ -185,10 +185,11 @@ export function usePlanState(
         await storage.writeFile(METADATA_FILE, JSON.stringify(metadataPayload, null, 2));
         await storage.writeFile(PLAN_FILE, JSON.stringify({ tasks: updatedTasks }, null, 2));
 
-        if (connectors && updatedMetadata) {
-          await connectors.onTasksSaved(updatedTasks, updatedMetadata, updatedConfig);
-        } else if (connectors && metadata) {
-          await connectors.onTasksSaved(updatedTasks, metadata, updatedConfig);
+        if (connectors) {
+          const syncMetadata = updatedMetadata || metadata;
+          if (syncMetadata) {
+            await connectors.onTasksSaved(updatedTasks, syncMetadata, updatedConfig);
+          }
         }
       });
     } catch (e) {

@@ -33,7 +33,11 @@ function openDB(): Promise<IDBDatabase> {
 
 async function getTauriStorePath(): Promise<string> {
   const dir = await appDataDir();
-  await mkdir(dir, { recursive: true });
+  try {
+    await mkdir(dir, { recursive: true });
+  } catch (error) {
+    throw new Error(`Failed to initialize Tauri bookmark directory: ${error instanceof Error ? error.message : 'unknown error'}`);
+  }
   return join(dir, TAURI_STORE_FILE);
 }
 

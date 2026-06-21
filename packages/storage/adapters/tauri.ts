@@ -33,7 +33,7 @@ export class TauriStorage implements StorageManager, NotifyStorage {
   private async getPlanFolderPath(create = false): Promise<string | null> {
     if (!this.directoryPath) return null;
 
-    const selectedBaseName = await basename(this.directoryPath);
+    const selectedBaseName = await this.getSelectedDirectoryName(this.directoryPath);
     if (selectedBaseName === ROOT_FOLDER_NAME) {
       if (create) {
         await mkdir(this.directoryPath, { recursive: true });
@@ -115,8 +115,7 @@ export class TauriStorage implements StorageManager, NotifyStorage {
 
   getDirectoryName(): string {
     if (!this.directoryPath) return ROOT_FOLDER_NAME;
-    const parts = this.directoryPath.split(/[\\/]/);
-    return parts.filter(Boolean).pop() || ROOT_FOLDER_NAME;
+    return this.getSelectedDirectoryNameSync(this.directoryPath);
   }
 
   getDirectoryPath(): string {
@@ -195,5 +194,18 @@ export class TauriStorage implements StorageManager, NotifyStorage {
         else if (level === 'warning') console.warn(message);
         else console.log(message);
       });
+  }
+
+  private async getSelectedDirectoryName(path: string): Promise<string> {
+    try {
+      return await basename(path);
+    } catch {
+      return this.getSelectedDirectoryNameSync(path);
+    }
+  }
+
+  private getSelectedDirectoryNameSync(path: string): string {
+    const parts = path.split(/[\\/]/);
+    return parts.filter(Boolean).pop() || ROOT_FOLDER_NAME;
   }
 }

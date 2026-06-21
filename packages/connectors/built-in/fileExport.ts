@@ -31,9 +31,12 @@ export class FileExportConnector implements Connector {
     const fileName = this.config.fileName || `plan-inplace-${data.planId}.${extension}`;
 
     if (this.isTauri() && this.config.outputPath) {
+      const separator = this.config.outputPath.includes('\\') && !this.config.outputPath.includes('/')
+        ? '\\'
+        : '/';
       const path = this.config.outputPath.endsWith('/') || this.config.outputPath.endsWith('\\')
         ? `${this.config.outputPath}${fileName}`
-        : `${this.config.outputPath}/${fileName}`;
+        : `${this.config.outputPath}${separator}${fileName}`;
       await writeTextFile(path, content);
       return { success: true };
     }

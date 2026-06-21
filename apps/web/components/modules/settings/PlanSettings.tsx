@@ -559,6 +559,7 @@ export const PlanSettings = forwardRef<PlanSettingsActions>(
                     </div>
 
                     <textarea
+                      aria-label={`${connector.name} connector configuration JSON`}
                       value={draft}
                       onChange={(e) => handleConnectorConfigChange(connector.id, e.target.value)}
                       onBlur={() => handleConnectorConfigBlur(connector.id)}

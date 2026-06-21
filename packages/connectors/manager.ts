@@ -140,7 +140,9 @@ export class ConnectorManager {
     for (const connector of this.registry.values()) {
       const state = this.state.get(connector.id);
       if (!state?.enabled) continue;
-      if (!connector.isConfigured() && Object.keys(state.config || {}).length === 0) continue;
+      const hasConfig = Object.keys(state.config || {}).length > 0;
+      // Skip only when the connector reports not configured and there is no saved configuration to apply.
+      if (!connector.isConfigured() && !hasConfig) continue;
 
       try {
         await fn(connector, state);

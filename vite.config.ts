@@ -5,6 +5,7 @@ import path from 'path';
 import {defineConfig} from 'vite';
 
 export default defineConfig(({mode}) => {
+  // TAURI_BUILD=1 is set by desktop build scripts to avoid bundling service workers in native builds.
   const isTauriBuild = process.env.TAURI_BUILD === '1';
 
   return {
