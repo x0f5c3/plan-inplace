@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { ROOT_FOLDER_NAME } from '@packages/core/config';
 import { BrowserStorage } from './adapters/browser';
 import { VSCodeStorage } from './adapters/vscode';
+import { TauriStorage } from './adapters/tauri';
 import { StorageManager } from './adapters/base';
+import { isTauriRuntime } from './isTauriRuntime';
 
 /**
  * --------------------------------------------------------------------------
@@ -19,6 +21,8 @@ export function useFileIO() {
     const vscode = new VSCodeStorage();
     if (vscode.isSupported()) {
       setStorage(vscode);
+    } else if (isTauriRuntime()) {
+      setStorage(new TauriStorage());
     } else {
       setStorage(new BrowserStorage());
     }

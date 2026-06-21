@@ -27,7 +27,8 @@ export const DEFAULT_PLAN_CONFIG = {
       type: 'select' as const,
       options: DEFAULT_STATUS_OPTIONS
     }
-  ]
+  ],
+  connectors: []
   
 };
 
@@ -41,4 +42,3 @@ export const PRIORITY_WEIGHTS: Record<string, number> = {
 
 export const INITIAL_RANK = 1024;
 export const GAP = 1024;
-

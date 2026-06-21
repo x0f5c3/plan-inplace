@@ -37,6 +37,11 @@ export const PlanSettings = forwardRef<PlanSettingsActions>(
       tasks, 
       saveSettings: onSave, 
       unlistCurrentPlan: onUnlist,
+      connectors,
+      setConnectorEnabled,
+      updateConnectorConfig,
+      testConnector,
+      exportConnectorConfig,
     } = usePlan();
 
     const { confirm: confirmRequest } = useConfirm();
@@ -63,6 +68,8 @@ export const PlanSettings = forwardRef<PlanSettingsActions>(
     const [errorFields, setErrorFields] = useState<number[]>([]);
     const [showSuccess, setShowSuccess] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
+    const [connectorConfigDrafts, setConnectorConfigDrafts] = useState<Record<string, string>>({});
+    const [connectorTests, setConnectorTests] = useState<Record<string, string>>({});
     
     // Migration states
     const [migrationQueue, setMigrationQueue] = useState<DeletionStep[]>([]);
@@ -93,6 +100,8 @@ export const PlanSettings = forwardRef<PlanSettingsActions>(
       setMigrationQueue([]);
       setCurrentStepIndex(-1);
       setMigrationTargetId('clear');
+      setConnectorConfigDrafts({});
+      setConnectorTests({});
     }, [initialConfig, initialMetadata, tasks]);
 
     useEffect(() => {
@@ -144,10 +153,14 @@ export const PlanSettings = forwardRef<PlanSettingsActions>(
     const finalizeSave = useCallback((finalTasks: Task[]) => {
       setError(null);
       setErrorFields([]);
-      onSave(formData.config, formData.metadata, finalTasks);
+      const nextConfig: PlanConfig = {
+        ...formData.config,
+        connectors: exportConnectorConfig()
+      };
+      onSave(nextConfig, formData.metadata, finalTasks);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-    }, [onSave, formData.config, formData.metadata]);
+    }, [onSave, formData.config, formData.metadata, exportConnectorConfig]);
 
     const handleSave = useCallback(() => {
       // Validation
@@ -390,6 +403,44 @@ export const PlanSettings = forwardRef<PlanSettingsActions>(
       await handleImportConfig();
     };
 
+    const syncConnectorConfigInForm = useCallback(() => {
+      setFormData(prev => ({
+        ...prev,
+        config: {
+          ...prev.config,
+          connectors: exportConnectorConfig()
+        }
+      }));
+    }, [exportConnectorConfig]);
+
+    const handleConnectorToggle = (id: string, enabled: boolean) => {
+      setConnectorEnabled(id, enabled);
+      syncConnectorConfigInForm();
+    };
+
+    const handleConnectorConfigChange = (id: string, value: string) => {
+      setConnectorConfigDrafts(prev => ({ ...prev, [id]: value }));
+    };
+
+    const handleConnectorConfigBlur = (id: string) => {
+      const raw = connectorConfigDrafts[id];
+      if (raw === undefined) return;
+      try {
+        const parsed = raw.trim() ? JSON.parse(raw) : {};
+        updateConnectorConfig(id, parsed);
+        setConnectorTests(prev => ({ ...prev, [id]: '' }));
+        syncConnectorConfigInForm();
+      } catch {
+        setConnectorTests(prev => ({ ...prev, [id]: 'Invalid JSON config' }));
+      }
+    };
+
+    const handleConnectorTest = async (id: string) => {
+      const result = await testConnector(id);
+      setConnectorTests(prev => ({ ...prev, [id]: result.ok ? 'Connection OK' : result.message || 'Connection failed' }));
+      syncConnectorConfigInForm();
+    };
+
     return (
       <div className="h-full flex flex-col p-6 mx-auto space-y-8 overflow-y-auto relative">
         <AnimatePresence>
@@ -468,6 +519,57 @@ export const PlanSettings = forwardRef<PlanSettingsActions>(
               <Plus className="w-6 h-6" />
               <p className="text-[11px] font-bold uppercase tracking-widest">Add Field</p>
             </button>
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-lg">Connectors</h2>
+            <p className="text-sm text-text-secondary">
+              Configure external sync targets (REST, gRPC gateway, webhooks, exports).
+            </p>
+
+            <div className="space-y-4">
+              {connectors.map((connector) => {
+                const draft = connectorConfigDrafts[connector.id] ?? JSON.stringify(connector.config || {}, null, 2);
+                const status = connectorTests[connector.id]
+                  || (connector.lastSyncStatus === 'error' ? connector.lastSyncMessage : connector.lastSyncStatus === 'success' ? 'Last sync successful' : '');
+
+                return (
+                  <div key={connector.id} className="rounded-md border border-border p-4 space-y-3 bg-card">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-semibold">{connector.name}</p>
+                        <p className="text-xs text-text-secondary">{connector.description}</p>
+                      </div>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={connector.enabled}
+                          onChange={(e) => handleConnectorToggle(connector.id, e.target.checked)}
+                        />
+                        Enabled
+                      </label>
+                    </div>
+
+                    <textarea
+                      value={draft}
+                      onChange={(e) => handleConnectorConfigChange(connector.id, e.target.value)}
+                      onBlur={() => handleConnectorConfigBlur(connector.id)}
+                      rows={4}
+                      className="w-full resize-y bg-bg border border-border rounded-md px-3 py-2 text-[12px] font-mono focus:ring-1 focus:ring-accent focus:border-accent outline-none"
+                    />
+
+                    <div className="flex items-center justify-between gap-3">
+                      <Button variant="secondary" size="sm" onClick={() => handleConnectorTest(connector.id)}>
+                        Test Connection
+                      </Button>
+                      {status && (
+                        <span className="text-xs text-text-secondary">{status}</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </section>
         </div>
 

@@ -9,3 +9,4 @@ coverage/
 !.env.example
 *.vsix
 plan-inplace/
+connectors.json

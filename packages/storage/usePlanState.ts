@@ -14,6 +14,7 @@ import {
 } from '@packages/core/logic';
 import { DEFAULT_PLAN_CONFIG, METADATA_FILE, PLAN_FILE } from '@packages/core/config';
 import { StorageManager } from './adapters/base';
+import { ConnectorManager } from '@packages/connectors/manager';
 
 /**
  * --------------------------------------------------------------------------
@@ -23,7 +24,11 @@ import { StorageManager } from './adapters/base';
  * task list, project configuration, and metadata. Handles the lifecycle 
  * of project loading (refresh) and background persistence.
  */
-export function usePlanState(storage: StorageManager | null, loadRecentPlans: () => Promise<any>) {
+export function usePlanState(
+  storage: StorageManager | null,
+  loadRecentPlans: () => Promise<any>,
+  connectors?: ConnectorManager
+) {
   // --- Core Data ---
   const [tasks, setTasks] = useState<Task[]>([]);
   const [metadata, setMetadata] = useState<PlanMetadata | null>(null);
@@ -71,6 +76,9 @@ export function usePlanState(storage: StorageManager | null, loadRecentPlans: ()
         setIsReady(true);
 
         await storage.registerPlan(initialPlan.id, initialPlan.name);
+        if (connectors) {
+          await connectors.onPlanCreated(initialPlan);
+        }
         await loadRecentPlans();
       });
     } catch (e) {
@@ -116,10 +124,19 @@ export function usePlanState(storage: StorageManager | null, loadRecentPlans: ()
             const { tasks: loadedTasks, updated } = sanitizeTasks(parsedTasks);
 
             setConfig(contents.config);
+            connectors?.hydrate(contents.config.connectors);
             setMetadata(contents.plan);
             setRawMetadata(contents.raw);
             setTasks(loadedTasks);
             setIsReady(true);
+
+            if (connectors) {
+              const mergedTasks = await connectors.onTasksLoaded(loadedTasks, contents.plan, contents.config);
+              if (mergedTasks) {
+                setTasks(mergedTasks);
+                setNeedsPersist(true);
+              }
+            }
             
             if (updated) {
               setNeedsPersist(true);
@@ -168,6 +185,12 @@ export function usePlanState(storage: StorageManager | null, loadRecentPlans: ()
         
         await storage.writeFile(METADATA_FILE, JSON.stringify(metadataPayload, null, 2));
         await storage.writeFile(PLAN_FILE, JSON.stringify({ tasks: updatedTasks }, null, 2));
+
+        if (connectors && updatedMetadata) {
+          await connectors.onTasksSaved(updatedTasks, updatedMetadata, updatedConfig);
+        } else if (connectors && metadata) {
+          await connectors.onTasksSaved(updatedTasks, metadata, updatedConfig);
+        }
       });
     } catch (e) {
       console.error('Persist error', e);
@@ -175,7 +198,7 @@ export function usePlanState(storage: StorageManager | null, loadRecentPlans: ()
       isPersistingRef.current = false;
       setIsPersisting(false);
     }
-  }, [storage, loadRecentPlans, rawMetadata, runLocked]);
+  }, [storage, loadRecentPlans, rawMetadata, runLocked, connectors, metadata]);
 
   // --- Persistence Watcher ---
   // Debounces persistence requests to ensure multiple rapid changes

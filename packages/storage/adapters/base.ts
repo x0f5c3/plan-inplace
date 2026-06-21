@@ -1,5 +1,5 @@
 export interface StorageManager {
-  type: 'browser' | 'vscode';
+  type: 'browser' | 'vscode' | 'tauri';
   isSupported(): boolean;
   hasPermission(): Promise<boolean>;
   requestPermission(): Promise<boolean>;

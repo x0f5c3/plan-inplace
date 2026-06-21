@@ -7,6 +7,7 @@ import { RecentPlan } from '@packages/types/shared';
 import { ROOT_FOLDER_NAME } from '@packages/core/config';
 import { UI_MESSAGES } from '@packages/types/messages';
 import { isWorkspaceStorage, isNotifyStorage } from './adapters/base';
+import { useConnectors } from './useConnectors';
 
 export type ToastType = 'info' | 'success';
 
@@ -37,8 +38,11 @@ export function useStorage(confirmRequest?: (options: any) => Promise<boolean>) 
   // 3. Manage Recently Viewed (Persistence of folder handles for session recovery)
   const recentPlans = useRecentPlans();
 
+  // 4. Connector Registry and Sync Hooks
+  const connectorState = useConnectors();
+
   // 4. Manage active Plan data (The core task engine and debounced JSON persistence)
-  const planState = usePlanState(fileIO.storage, recentPlans.loadRecentPlans);
+  const planState = usePlanState(fileIO.storage, recentPlans.loadRecentPlans, connectorState.manager);
 
   // --- Toasts ---
   const [toasts, setToasts] = useState<AppToast[]>([]);
@@ -222,6 +226,10 @@ export function useStorage(confirmRequest?: (options: any) => Promise<boolean>) 
     });
   }, [recentPlans.loadRecentPlans, fileIO.storage]);
 
+  useEffect(() => {
+    connectorState.manager.hydrate(planState.config.connectors);
+  }, [connectorState.manager, planState.config.connectors]);
+
   // Sync recent plans with VS Code whenever they change
   useEffect(() => {
     if (isWorkspaceStorage(fileIO.storage) && recentPlans.bookmarks.length > 0) {
@@ -287,5 +295,10 @@ export function useStorage(confirmRequest?: (options: any) => Promise<boolean>) 
     
     // Legacy mapping (if any)
     saveConfig: planState.saveConfig, // Alias used in older versions
+    connectors: connectorState.connectors,
+    setConnectorEnabled: connectorState.setConnectorEnabled,
+    updateConnectorConfig: connectorState.updateConnectorConfig,
+    testConnector: connectorState.testConnector,
+    exportConnectorConfig: connectorState.exportConnectorConfig,
   };
 }

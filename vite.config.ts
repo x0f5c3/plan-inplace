@@ -5,11 +5,13 @@ import path from 'path';
 import {defineConfig} from 'vite';
 
 export default defineConfig(({mode}) => {
+  const isTauriBuild = process.env.TAURI_BUILD === '1';
+
   return {
     plugins: [
       react(),
       tailwindcss(),
-      VitePWA({
+      !isTauriBuild && VitePWA({
         registerType: 'prompt',
         manifest: false,
         includeAssets: [
@@ -39,7 +41,7 @@ export default defineConfig(({mode}) => {
           ],
         },
       }),
-    ],
+    ].filter(Boolean),
     base: './',
     define: {
       'process.env.NODE_ENV': JSON.stringify(mode),

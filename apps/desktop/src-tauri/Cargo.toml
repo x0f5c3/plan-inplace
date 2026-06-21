@@ -1,0 +1,19 @@
+[package]
+name = "plan-inplace-desktop"
+version = "0.1.0"
+description = "Plan InPlace desktop app"
+authors = ["Plan InPlace"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-notification = "2"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

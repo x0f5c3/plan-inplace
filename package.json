@@ -8,8 +8,16 @@
     "name": "Man Ho Wong",
     "url": "https://github.com/manhowong"
   },
-  "categories": ["Other"],
-  "keywords": ["planner", "project manager", "kanban", "todo", "task"],
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "planner",
+    "project manager",
+    "kanban",
+    "todo",
+    "task"
+  ],
   "icon": "assets/images/icon.png",
   "pricing": "Free",
   "license": "Apache License 2.0",
@@ -28,8 +36,11 @@
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
+    "build:desktop": "TAURI_BUILD=1 vite build && tauri build --config apps/desktop/src-tauri/tauri.conf.json",
     "build:extension": "esbuild apps/vscode/extension.ts --bundle --outfile=dist-extension/extension.cjs --external:vscode --platform=node --format=cjs",
     "preview": "vite preview",
+    "tauri:dev": "tauri dev --config apps/desktop/src-tauri/tauri.conf.json",
+    "tauri:build": "tauri build --config apps/desktop/src-tauri/tauri.conf.json",
     "clean": "rm -rf dist dist-extension",
     "lint": "tsc --noEmit"
   },
@@ -100,6 +111,10 @@
     }
   },
   "dependencies": {
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-dialog": "^2.7.1",
+    "@tauri-apps/plugin-fs": "^2.5.1",
+    "@tauri-apps/plugin-notification": "^2.3.3",
     "date-fns": "^4.1.0",
     "linkify-react": "^4.3.2",
     "linkifyjs": "^4.3.2"
@@ -111,6 +126,7 @@
     "@tailwindcss/oxide-linux-x64-gnu": "^4.2.2",
     "@tailwindcss/vite": "^4.1.14",
     "@tanstack/react-table": "^8.21.3",
+    "@tauri-apps/cli": "^2.11.3",
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

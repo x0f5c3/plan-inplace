@@ -49,6 +49,17 @@ export interface CustomField {
   options?: DropdownOption[];
 }
 
+export type ConnectorSyncStatus = 'idle' | 'success' | 'error';
+
+export interface ConnectorConfigEntry {
+  id: string;
+  enabled: boolean;
+  config: Record<string, any>;
+  lastSyncAt?: string;
+  lastSyncStatus?: ConnectorSyncStatus;
+  lastSyncMessage?: string;
+}
+
 // --------------------------------------------------------------------------
 // Metadata & Plan System Entities
 // --------------------------------------------------------------------------
@@ -63,6 +74,7 @@ export interface PlanMetadata {
 
 export interface PlanConfig {
   customFields: CustomField[];
+  connectors?: ConnectorConfigEntry[];
   tableView?: {
     columnOrder?: string[];
     columnVisibility?: Record<string, boolean>;
