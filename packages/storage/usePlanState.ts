@@ -124,7 +124,6 @@ export function usePlanState(
             const { tasks: loadedTasks, updated } = sanitizeTasks(parsedTasks);
 
             setConfig(contents.config);
-            connectors?.hydrate(contents.config.connectors);
             setMetadata(contents.plan);
             setRawMetadata(contents.raw);
             setTasks(loadedTasks);

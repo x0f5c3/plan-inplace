@@ -23,16 +23,24 @@ export class WebhookConnector implements Connector {
   async push(data: SyncPayload): Promise<SyncResult> {
     if (!this.config.url) return { success: false, message: 'Webhook URL is required' };
 
-    await fetch(this.config.url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(this.config.secret ? { 'x-plan-inplace-secret': this.config.secret } : {})
-      },
-      body: JSON.stringify(data)
-    });
+    try {
+      const response = await fetch(this.config.url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(this.config.secret ? { 'x-plan-inplace-secret': this.config.secret } : {})
+        },
+        body: JSON.stringify(data)
+      });
 
-    return { success: true };
+      if (!response.ok) {
+        return { success: false, message: `HTTP ${response.status}` };
+      }
+
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error instanceof Error ? error.message : 'Webhook failed' };
+    }
   }
 
   async pull(): Promise<SyncPayload | null> {

@@ -5,6 +5,7 @@ import { Plus, Copy, AlertCircle, Check } from 'lucide-react';
 import { UI_MESSAGES } from '@packages/types/messages';
 import { Button } from '@packages/ui/Button';
 import { Modal } from '@packages/ui/Modal';
+import { ConnectorState } from '@packages/connectors/base';
 import { PlanMetadataFields } from './PlanMetadataFields';
 import { FieldCard } from './FieldCard';
 import { MigrationDialog, MigrationStep } from './MigrationDialog';
@@ -441,6 +442,14 @@ export const PlanSettings = forwardRef<PlanSettingsActions>(
       syncConnectorConfigInForm();
     };
 
+    const getConnectorStatus = (connector: ConnectorState) => {
+      const testStatus = connectorTests[connector.id];
+      if (testStatus) return testStatus;
+      if (connector.lastSyncStatus === 'error') return connector.lastSyncMessage || 'Sync failed';
+      if (connector.lastSyncStatus === 'success') return 'Last sync successful';
+      return '';
+    };
+
     return (
       <div className="h-full flex flex-col p-6 mx-auto space-y-8 overflow-y-auto relative">
         <AnimatePresence>
@@ -530,8 +539,7 @@ export const PlanSettings = forwardRef<PlanSettingsActions>(
             <div className="space-y-4">
               {connectors.map((connector) => {
                 const draft = connectorConfigDrafts[connector.id] ?? JSON.stringify(connector.config || {}, null, 2);
-                const status = connectorTests[connector.id]
-                  || (connector.lastSyncStatus === 'error' ? connector.lastSyncMessage : connector.lastSyncStatus === 'success' ? 'Last sync successful' : '');
+                const status = getConnectorStatus(connector);
 
                 return (
                   <div key={connector.id} className="rounded-md border border-border p-4 space-y-3 bg-card">

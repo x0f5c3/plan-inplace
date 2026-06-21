@@ -45,10 +45,24 @@ async function readTauriStore(): Promise<BookmarkStore> {
 
   try {
     const content = await readTextFile(path);
-    const parsed = JSON.parse(content) as BookmarkStore;
+    const parsed = JSON.parse(content) as Partial<BookmarkStore>;
+    const recentPlans = Array.isArray(parsed.recentPlans)
+      ? parsed.recentPlans.filter((plan: any) => (
+        plan
+        && typeof plan.id === 'string'
+        && typeof plan.name === 'string'
+        && typeof plan.lastOpened === 'number'
+      )).map((plan: any) => ({
+        id: plan.id,
+        name: plan.name,
+        path: typeof plan.path === 'string' ? plan.path : undefined,
+        lastOpened: plan.lastOpened
+      }))
+      : [];
+
     return {
-      recentPlans: Array.isArray(parsed.recentPlans) ? parsed.recentPlans : [],
-      lastPlanId: parsed.lastPlanId || null
+      recentPlans,
+      lastPlanId: typeof parsed.lastPlanId === 'string' ? parsed.lastPlanId : null
     };
   } catch {
     return { recentPlans: [], lastPlanId: null };

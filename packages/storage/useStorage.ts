@@ -41,7 +41,7 @@ export function useStorage(confirmRequest?: (options: any) => Promise<boolean>) 
   // 4. Connector Registry and Sync Hooks
   const connectorState = useConnectors();
 
-  // 4. Manage active Plan data (The core task engine and debounced JSON persistence)
+  // 5. Manage active Plan data (The core task engine and debounced JSON persistence)
   const planState = usePlanState(fileIO.storage, recentPlans.loadRecentPlans, connectorState.manager);
 
   // --- Toasts ---
