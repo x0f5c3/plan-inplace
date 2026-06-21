@@ -77,7 +77,6 @@ function AppInner({
     onNeedRefresh() {
       setShowUpdateAvailable(true);
     },
-    registerType: 'prompt',
   });
 
   useEffect(() => {
